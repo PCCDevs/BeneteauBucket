@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Personality Chatbot</title>
+    <style>
+        /* Optional basic CSS for styling */
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; }
+        #chat-window { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+        .message { margin-bottom: 5px; padding: 5px; border-radius: 5px; }
+        .bot { background-color: #e6f7ff; text-align: left; }
+        .user { background-color: #f0f0f0; text-align: right; }
+    </style>
+</head>
+<body>
+
+    <h1>Your Custom Chatbot</h1>
+    
+    <div id="chat-window">
+        </div>
+
+    <input type="text" id="user-input" placeholder="Type your message..." style="width: 80%;">
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        // --- Core JavaScript Logic ---
+
+        // IMPORTANT: In a real-world application, you MUST handle API calls 
+        // through a secure backend server (like Python/Node.js) to hide your API Key!
+
+        // Placeholder for the function to send the message
+        async function sendMessage() {
+            const inputElement = document.getElementById('user-input');
+            const userMessage = inputElement.value.trim();
+            if (!userMessage) return;
+
+            // 1. Display User Message
+            appendMessage('user', userMessage);
+            inputElement.value = '';
+
+            // 2. Placeholder for the AI response
+            appendMessage('bot', '...Thinking...');
+
+            // **3. THE KEY STEP: Sending the message to the backend/API**
+            try {
+                // This is where you would make a call to your backend server (e.g., Python)
+                // The server receives userMessage, adds the System Prompt, calls the LLM, 
+                // and returns the response.
+                
+                // --- For this example, we'll simulate the response ---
+                const simulatedResponse = await simulateApiCall(userMessage);
+
+                // 4. Update the Bot's Response
+                updateLastBotMessage(simulatedResponse);
+
+            } catch (error) {
+                console.error("Chatbot Error:", error);
+                updateLastBotMessage("Error: Could not get a response from the AI.");
+            }
+        }
+
+        // Simulates the backend server logic (replace this with a real fetch call later)
+        // In a real app, this function would send a request to your Python server.
+        async function simulateApiCall(userMessage) {
+            // Replace this simulated delay with a real `fetch` request to your backend
+            await new Promise(resolve => setTimeout(resolve, 1500)); 
+            
+            // This response should come from your LLM API based on the system prompt
+            const hardcodedResponse = `Ahoy there, skipper! You speak of modern marvels. My logbook only covers sails and sea legs! Now, tell me, have you ever crossed paths with a great white whale, matey?`;
+            
+            return hardcodedResponse; 
+        }
+
+        // --- UI Functions ---
+        function appendMessage(sender, text) {
+            const chatWindow = document.getElementById('chat-window');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${sender}`;
+            msgDiv.innerHTML = text; // Use innerHTML to handle potential formatting
+            chatWindow.appendChild(msgDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight; // Auto-scroll
+        }
+
+        function updateLastBotMessage(text) {
+            const chatWindow = document.getElementById('chat-window');
+            const lastMessage = chatWindow.lastElementChild;
+            if (lastMessage && lastMessage.classList.contains('bot')) {
+                lastMessage.innerHTML = text;
+            }
+        }
+    </script>
+
+</body>
+</html>
