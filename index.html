@@ -5,31 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Custom Personality Chatbot</title>
     <style>
-        /* Optional basic CSS for styling */
-        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; }
-        #chat-window { border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
-        .message { margin-bottom: 5px; padding: 5px; border-radius: 5px; }
-        .bot { background-color: #e6f7ff; text-align: left; }
-        .user { background-color: #f0f0f0; text-align: right; }
+        /* --- Basic CSS Styling --- */
+        body { 
+            font-family: sans-serif; 
+            max-width: 600px; 
+            margin: 40px auto; 
+            background-color: #f4f7f6;
+        }
+        h1 {
+            color: #1a535c;
+            text-align: center;
+        }
+        #chat-window { 
+            border: 1px solid #c9d6df; 
+            height: 400px; 
+            overflow-y: scroll; 
+            padding: 15px; 
+            margin-bottom: 15px; 
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .message { 
+            margin-bottom: 12px; 
+            padding: 8px 12px; 
+            border-radius: 18px;
+            max-width: 80%;
+            clear: both;
+        }
+        .bot { 
+            background-color: #e6f7ff; 
+            text-align: left; 
+            float: left;
+        }
+        .user { 
+            background-color: #d1f7c4; 
+            text-align: left; /* Keep text left, float right */
+            float: right;
+        }
+        #user-input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box; /* Include padding in the width */
+            margin-right: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #1a535c;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2b737d;
+        }
     </style>
 </head>
 <body>
 
-    <h1>Your Custom Chatbot</h1>
+    <h1>⚓ Custom Sea Captain Chatbot</h1>
     
     <div id="chat-window">
-        </div>
+        <div class="message bot">Ahoy, matey! Ask me about the sea, whales, or sailing!</div>
+    </div>
 
-    <input type="text" id="user-input" placeholder="Type your message..." style="width: 80%;">
+    <input type="text" id="user-input" placeholder="Type your message..." style="width: 80%;" onkeypress="if(event.key === 'Enter') sendMessage()">
     <button onclick="sendMessage()">Send</button>
 
     <script>
         // --- Core JavaScript Logic ---
 
-        // IMPORTANT: In a real-world application, you MUST handle API calls 
-        // through a secure backend server (like Python/Node.js) to hide your API Key!
-
-        // Placeholder for the function to send the message
+        // Function to handle sending the message (called when button is clicked or Enter is pressed)
         async function sendMessage() {
             const inputElement = document.getElementById('user-input');
             const userMessage = inputElement.value.trim();
@@ -42,34 +90,51 @@
             // 2. Placeholder for the AI response
             appendMessage('bot', '...Thinking...');
 
-            // **3. THE KEY STEP: Sending the message to the backend/API**
+            // **3. THE FINAL CONNECTION: Call the secure backend server**
             try {
-                // This is where you would make a call to your backend server (e.g., Python)
-                // The server receives userMessage, adds the System Prompt, calls the LLM, 
-                // and returns the response.
-                
-                // --- For this example, we'll simulate the response ---
-                const simulatedResponse = await simulateApiCall(userMessage);
+                const botResponse = await realApiCall(userMessage);
 
                 // 4. Update the Bot's Response
-                updateLastBotMessage(simulatedResponse);
+                updateLastBotMessage(botResponse);
 
             } catch (error) {
                 console.error("Chatbot Error:", error);
-                updateLastBotMessage("Error: Could not get a response from the AI.");
+                // Show a generic error to the user
+                updateLastBotMessage("Error: Could not get a response from the captain. Check the server!");
             }
         }
 
-        // Simulates the backend server logic (replace this with a real fetch call later)
-        // In a real app, this function would send a request to your Python server.
-        async function simulateApiCall(userMessage) {
-            // Replace this simulated delay with a real `fetch` request to your backend
-            await new Promise(resolve => setTimeout(resolve, 1500)); 
+        /**
+         * Sends the user's message to the Flask backend server.
+         * IMPORTANT: The URL must be updated when deployed to Render!
+         */
+        async function realApiCall(userMessage) {
+            // *** IMPORTANT: CHANGE THIS URL WHEN DEPLOYING TO RENDER ***
+            // Use http://127.0.0.1:5000/chat for local testing.
+            // Use https://YOUR-RENDER-DOMAIN.onrender.com/chat for production.
+            const API_URL = 'http://127.0.0.1:5000/chat'; 
             
-            // This response should come from your LLM API based on the system prompt
-            const hardcodedResponse = `Ahoy there, skipper! You speak of modern marvels. My logbook only covers sails and sea legs! Now, tell me, have you ever crossed paths with a great white whale, matey?`;
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: userMessage })
+            });
+
+            if (!response.ok) {
+                // Read the error body if available for better debugging
+                const errorText = await response.text();
+                throw new Error(`HTTP error! Status: ${response.status}. Response: ${errorText}`);
+            }
+
+            const data = await response.json();
+
+            if (data.error) {
+                throw new Error(`Backend Error: ${data.error}`);
+            }
             
-            return hardcodedResponse; 
+            return data.response;
         }
 
         // --- UI Functions ---
@@ -77,14 +142,15 @@
             const chatWindow = document.getElementById('chat-window');
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${sender}`;
-            msgDiv.innerHTML = text; // Use innerHTML to handle potential formatting
+            msgDiv.innerHTML = text; 
             chatWindow.appendChild(msgDiv);
-            chatWindow.scrollTop = chatWindow.scrollHeight; // Auto-scroll
+            chatWindow.scrollTop = chatWindow.scrollHeight; // Auto-scroll to latest message
         }
 
         function updateLastBotMessage(text) {
             const chatWindow = document.getElementById('chat-window');
-            const lastMessage = chatWindow.lastElementChild;
+            // Select the last element in the chat window (which should be the '...Thinking...' message)
+            const lastMessage = chatWindow.lastElementChild; 
             if (lastMessage && lastMessage.classList.contains('bot')) {
                 lastMessage.innerHTML = text;
             }
