@@ -1,0 +1,3 @@
+Flask
+google-genai
+gunicorn  # Render needs a production server (Gunicorn) to run Flask
